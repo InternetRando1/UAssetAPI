@@ -1436,6 +1436,12 @@ namespace UAssetAPI
         public Guid PersistentGuid;
 
         /// <summary>
+        /// Extra bytes added after PersistentGuid in UE5.7+ (ObjectVersionUE5 >= PERSISTENT_ID_REPLACED).
+        /// Purpose unknown; preserved verbatim for roundtrip fidelity.
+        /// </summary>
+        public byte[] PostPersistentGuidExtra;
+
+        /// <summary>
         /// Engine version this package was saved with. This may differ from CompatibleWithEngineVersion for assets saved with a hotfix release.
         /// </summary>
         public FEngineVersion RecordedEngineVersion;
@@ -1499,6 +1505,19 @@ namespace UAssetAPI
 
         /// <summary>Raw bytes of the MetaData section (between MetaDataOffset and the next section). Preserved during roundtrip.</summary>
         internal byte[] MetaDataBytes;
+
+        /// <summary>
+        /// Raw bytes of the asset registry data section, captured during Read and replayed during Write.
+        /// Preserves the exact encoding of FString values (UTF-8 vs UTF-16) that would otherwise be
+        /// lost when re-serializing through FAssetRegistryRecord's string fields.
+        /// </summary>
+        internal byte[] AssetRegistryDataBytes;
+
+        /// <summary>
+        /// Byte offset of the dependency data within AssetRegistryDataBytes.
+        /// Used to update the absolute offset pointer when replaying raw bytes at a new position.
+        /// </summary>
+        internal long AssetRegistryDepDataByteOffset = -1;
 
         /// <summary>Number of exports contained in this package</summary>
         internal int ExportCount = 0;
@@ -1786,13 +1805,18 @@ namespace UAssetAPI
 
             if (!IsFilterEditorOnly)
             {
-                PersistentGuid = ObjectVersion >= ObjectVersion.VER_UE4_ADDED_PACKAGE_OWNER 
+                PersistentGuid = ObjectVersion >= ObjectVersion.VER_UE4_ADDED_PACKAGE_OWNER
                     ? new Guid(reader.ReadBytes(16))
                     : PackageGuid;
 
                 if (ObjectVersion >= ObjectVersion.VER_UE4_ADDED_PACKAGE_OWNER &&
                     ObjectVersion < ObjectVersion.VER_UE4_NON_OUTER_PACKAGE_IMPORT)
                     reader.ReadBytes(16);
+            }
+
+            if (ObjectVersionUE5 >= ObjectVersionUE5.PERSISTENT_ID_REPLACED)
+            {
+                PostPersistentGuidExtra = reader.ReadBytes(8);
             }
 
             Generations = new List<FGenerationInfo>();
@@ -2082,6 +2106,21 @@ namespace UAssetAPI
                     ImportBits = ReadBitArray(reader, out ImportBitsCount);
                     SoftPackageBits = ReadBitArray(reader, out SoftPackageBitsCount);
                 }
+
+                // Capture raw bytes for lossless roundtrip (preserves FString encoding).
+                // Include any trailing bytes the parser didn't consume by extending to
+                // the next known section boundary.
+                long nextSection = reader.BaseStream.Length;
+                foreach (var candidate in new long[] { WorldTileInfoDataOffset, PreloadDependencyOffset, SectionSixOffset })
+                {
+                    if (candidate > AssetRegistryDataOffset && candidate < nextSection)
+                        nextSection = candidate;
+                }
+                int assetRegistryLen = (int)(nextSection - AssetRegistryDataOffset);
+                reader.BaseStream.Seek(AssetRegistryDataOffset, SeekOrigin.Begin);
+                AssetRegistryDataBytes = reader.ReadBytes(assetRegistryLen);
+                if (!IsPreDependencyFormat && AssetRegistryDependencyDataOffset >= 0)
+                    AssetRegistryDepDataByteOffset = AssetRegistryDependencyDataOffset - AssetRegistryDataOffset;
             }
             else
             {
@@ -2457,6 +2496,12 @@ namespace UAssetAPI
                     writer.Write(new byte[16]);
                 }
             }
+
+            if (ObjectVersionUE5 >= ObjectVersionUE5.PERSISTENT_ID_REPLACED && PostPersistentGuidExtra != null)
+            {
+                writer.Write(PostPersistentGuidExtra);
+            }
+
             writer.Write(Generations.Count);
             for (int i = 0; i < Generations.Count; i++)
             {
@@ -2789,40 +2834,59 @@ namespace UAssetAPI
                     ThumbnailTableOffset = 0;
                 }
 
-                // AssetRegistryData
+                // AssetRegistryData — replay raw bytes to preserve FString encoding
                 if (this.doWeHaveAssetRegistryData)
                 {
                     this.AssetRegistryDataOffset = (int)writer.BaseStream.Position;
 
-                    if (!IsPreDependencyFormat)
+                    if (AssetRegistryDataBytes != null && AssetRegistryDataBytes.Length > 0)
                     {
-                        writer.Write(AssetRegistryDependencyDataOffset);
-                    }
+                        writer.Write(AssetRegistryDataBytes);
 
-                    writer.Write(AssetRegistryRecords.Count);
-                    foreach (FAssetRegistryRecord record in AssetRegistryRecords)
-                    {
-                        writer.Write(record.Path);
-                        writer.Write(record.ClassName);
-
-                        writer.Write(record.TagMap.Count);
-                        foreach (KeyValuePair<string, string> pair in record.TagMap)
+                        // The first 8 bytes are an absolute offset to the dependency data —
+                        // update it to reflect the new section position
+                        if (!IsPreDependencyFormat && AssetRegistryDepDataByteOffset >= 0)
                         {
-                            writer.Write(pair.Key);
-                            writer.Write(pair.Value);
+                            long newDepDataOffset = this.AssetRegistryDataOffset + AssetRegistryDepDataByteOffset;
+                            long savedPos = writer.BaseStream.Position;
+                            writer.BaseStream.Seek(this.AssetRegistryDataOffset, SeekOrigin.Begin);
+                            writer.Write(newDepDataOffset);
+                            writer.BaseStream.Seek(savedPos, SeekOrigin.Begin);
                         }
                     }
-
-                    if (!IsPreDependencyFormat)
+                    else
                     {
-                        AssetRegistryDependencyDataOffset = writer.BaseStream.Position;
-                        writer.BaseStream.Seek(AssetRegistryDataOffset, SeekOrigin.Begin);
-                        writer.Write(AssetRegistryDependencyDataOffset);
-                        writer.BaseStream.Seek(AssetRegistryDependencyDataOffset, SeekOrigin.Begin);
+                        // Fallback: re-serialize (may lose FString encoding info)
+                        if (!IsPreDependencyFormat)
+                        {
+                            writer.Write(AssetRegistryDependencyDataOffset);
+                        }
 
-                        WriteBitArray(writer, ImportBitsCount, ImportBits);
+                        writer.Write(AssetRegistryRecords.Count);
+                        foreach (FAssetRegistryRecord record in AssetRegistryRecords)
+                        {
+                            writer.Write(record.Path);
+                            writer.Write(record.ClassName);
 
-                        WriteBitArray(writer, SoftPackageBitsCount, SoftPackageBits);
+                            writer.Write(record.TagMap.Count);
+                            foreach (KeyValuePair<string, string> pair in record.TagMap)
+                            {
+                                writer.Write(pair.Key);
+                                writer.Write(pair.Value);
+                            }
+                        }
+
+                        if (!IsPreDependencyFormat)
+                        {
+                            AssetRegistryDependencyDataOffset = writer.BaseStream.Position;
+                            writer.BaseStream.Seek(AssetRegistryDataOffset, SeekOrigin.Begin);
+                            writer.Write(AssetRegistryDependencyDataOffset);
+                            writer.BaseStream.Seek(AssetRegistryDependencyDataOffset, SeekOrigin.Begin);
+
+                            WriteBitArray(writer, ImportBitsCount, ImportBits);
+
+                            WriteBitArray(writer, SoftPackageBitsCount, SoftPackageBits);
+                        }
                     }
                 }
                 else

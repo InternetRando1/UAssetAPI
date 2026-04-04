@@ -713,6 +713,9 @@
         // OS shadow serialization of subobjects
         OS_SUB_OBJECT_SHADOW_SERIALIZATION,
 
+        // Added PersistentGuid replacement (8-byte field after PersistentGuid section in header)
+        PERSISTENT_ID_REPLACED,
+
         // -----<new versions can be added before this line>-------------------------------------------------
         // - this needs to be the last line (see note below)
         AUTOMATIC_VERSION_PLUS_ONE,
