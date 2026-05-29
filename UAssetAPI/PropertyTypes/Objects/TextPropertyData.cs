@@ -216,6 +216,9 @@ public class TextPropertyData : PropertyData<FString>
     //ArgumentFormat
     [JsonProperty]
     public FFormatArgumentData[] ArgumentsData;
+    //NamedFormat (keys; values reuse Arguments)
+    [JsonProperty]
+    public FString[] ArgumentNames;
     //Transform
     [JsonProperty]
     public ETransformType TransformType;
@@ -291,6 +294,22 @@ public class TextPropertyData : PropertyData<FString>
                     break;
                 case TextHistoryType.RawText:
                     Value = reader.ReadFString();
+                    break;
+                // NamedFormat: SourceFmt + int32 count + count*(FString key + FFormatArgumentValue).
+                // Layout matched empirically from K2Node pin bytes. UNTESTED round-trip against a
+                // real NamedFormat TextProperty (none on hand) — verify with a text-heavy asset or
+                // WidgetBlueprint whose FText uses a named format string, e.g. "Score: {score}".
+                case TextHistoryType.NamedFormat:
+                    SourceFmt = new TextPropertyData(FName.DefineDummy(reader.Asset, "SourceFmt"));
+                    SourceFmt.Read(reader, false, 1, 0, serializationContext);
+                    int NamedArgumentsSize = reader.ReadInt32();
+                    ArgumentNames = new FString[NamedArgumentsSize];
+                    Arguments = new FFormatArgumentValue[NamedArgumentsSize];
+                    for (int i = 0; i < NamedArgumentsSize; i++)
+                    {
+                        ArgumentNames[i] = reader.ReadFString();
+                        Arguments[i] = new FFormatArgumentValue(reader);
+                    }
                     break;
                 case TextHistoryType.OrderedFormat:
                     SourceFmt = new TextPropertyData(FName.DefineDummy(reader.Asset, "SourceFmt"));
@@ -387,6 +406,16 @@ public class TextPropertyData : PropertyData<FString>
                     break;
                 case TextHistoryType.RawText:
                     writer.Write(Value);
+                    break;
+                // NamedFormat — mirrors Read; round-trip untested (see Read case).
+                case TextHistoryType.NamedFormat:
+                    SourceFmt.Write(writer, false, serializationContext);
+                    writer.Write(Arguments.Length);
+                    for (int i = 0; i < Arguments.Length; i++)
+                    {
+                        writer.Write(ArgumentNames[i]);
+                        Arguments[i].Write(writer);
+                    }
                     break;
                 case TextHistoryType.OrderedFormat:
                     SourceFmt.Write(writer, false, serializationContext);
