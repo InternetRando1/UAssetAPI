@@ -1,0 +1,24 @@
+# Normalize line endings: store LF in the repo, regardless of contributor OS.
+# Makes CRLF/LF a non-issue (no spurious whole-file diffs on Windows).
+* text=auto eol=lf
+
+# Explicit text types
+*.cs         text eol=lf
+*.md         text eol=lf
+*.csproj     text eol=lf
+*.sln        text eol=lf
+*.yml        text eol=lf
+*.json       text eol=lf
+*.editorconfig text eol=lf
+
+# Binary assets / test fixtures — never normalize or diff (would corrupt them)
+*.uasset binary
+*.uexp   binary
+*.umap   binary
+*.usmap  binary
+*.jmap   binary
+*.gz     binary
+*.bin    binary
+*.png    binary
+*.dll    binary
+*.nupkg  binary
