@@ -2147,7 +2147,18 @@ namespace UAssetAPI
                 {
                     ImportBits = ReadBitArray(reader);
                     SoftPackageBits = ReadBitArray(reader);
-                    if (ObjectVersionUE5 >= ObjectVersionUE5.ASSETREGISTRY_PACKAGEBUILDDEPENDENCIES)
+                    // ExtraPackageDependencies is only present if the AssetRegistry section still has
+                    // bytes before the next section begins. Some packages (observed on UE5.7 v1018
+                    // assets) end the section at the bitarrays and serialize no dependency array;
+                    // reading it unconditionally over-reads into the next section. Bound by section end.
+                    long assetRegistryEnd = reader.BaseStream.Length;
+                    foreach (var candidate in new long[] { WorldTileInfoDataOffset, PreloadDependencyOffset, SectionSixOffset })
+                    {
+                        if (candidate > AssetRegistryDataOffset && candidate < assetRegistryEnd)
+                            assetRegistryEnd = candidate;
+                    }
+                    if (ObjectVersionUE5 >= ObjectVersionUE5.ASSETREGISTRY_PACKAGEBUILDDEPENDENCIES &&
+                        reader.BaseStream.Position < assetRegistryEnd)
                     {
                         ExtraPackageDependencies = reader.ReadArray(() => new KeyValuePair<FName, uint>(reader.ReadFName(), reader.ReadUInt32()));
                     }
@@ -2749,12 +2760,16 @@ namespace UAssetAPI
                     this.ExportOffset = 0;
                 }
 
-                // for binary equality after json conversion
-                // To-Do read/write cell data
+                // To-Do read/write cell data.
+                // UAssetAPI does not serialize Verse cell data, so preserve the cell-section
+                // offsets read from disk rather than recomputing them to the current position:
+                // on UE5.7 v1018 packages with zero cells the original offset trails DependsOffset
+                // (observed by 128 bytes), and overwriting it breaks binary equality. Only synthesize
+                // a position for freshly-created assets that have no read offset.
                 if (ObjectVersionUE5 >= ObjectVersionUE5.VERSE_CELLS)
                 {
-                    CellImportOffset = (int)writer.BaseStream.Position;
-                    CellExportOffset = (int)writer.BaseStream.Position;
+                    if (CellImportOffset == 0) CellImportOffset = (int)writer.BaseStream.Position;
+                    if (CellExportOffset == 0) CellExportOffset = (int)writer.BaseStream.Position;
                 }
 
                 // DependsMap
@@ -2908,17 +2923,18 @@ namespace UAssetAPI
                         WriteBitArray(writer, ImportBits);
                         WriteBitArray(writer, SoftPackageBits);
 
-                        if (ObjectVersionUE5 >= ObjectVersionUE5.ASSETREGISTRY_PACKAGEBUILDDEPENDENCIES)
+                        // Only write ExtraPackageDependencies when it was actually present on read.
+                        // A null value means the source package ended its AssetRegistry section at the
+                        // bitarrays (see the bounded read above); writing a 0 count would add 4 bytes
+                        // and shift every downstream offset.
+                        if (ObjectVersionUE5 >= ObjectVersionUE5.ASSETREGISTRY_PACKAGEBUILDDEPENDENCIES &&
+                            ExtraPackageDependencies is not null)
                         {
-                            if (ExtraPackageDependencies is null) writer.Write(0);
-                            else
+                            writer.Write(ExtraPackageDependencies.Length);
+                            foreach (var kvp in ExtraPackageDependencies)
                             {
-                                writer.Write(ExtraPackageDependencies.Length);
-                                foreach (var kvp in ExtraPackageDependencies)
-                                {
-                                    writer.Write(kvp.Key);
-                                    writer.Write(kvp.Value);
-                                }
+                                writer.Write(kvp.Key);
+                                writer.Write(kvp.Value);
                             }
                         }
                     }
