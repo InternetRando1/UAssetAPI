@@ -131,6 +131,22 @@ public double ReadDouble()
 
 [Double](https://docs.microsoft.com/en-us/dotnet/api/system.double)<br>
 
+### **ReadBoolean()**
+
+#### Caution
+
+Deprecated due to potential confusion with ReadBooleanInt, use ReadBooleanByte instead for identical behavior
+
+---
+
+```csharp
+public bool ReadBoolean()
+```
+
+#### Returns
+
+[Boolean](https://docs.microsoft.com/en-us/dotnet/api/system.boolean)<br>
+
 ### **ReadBooleanInt()**
 
 ```csharp
@@ -140,6 +156,26 @@ public bool ReadBooleanInt()
 #### Returns
 
 [Boolean](https://docs.microsoft.com/en-us/dotnet/api/system.boolean)<br>
+
+### **ReadBooleanByte()**
+
+```csharp
+public bool ReadBooleanByte()
+```
+
+#### Returns
+
+[Boolean](https://docs.microsoft.com/en-us/dotnet/api/system.boolean)<br>
+
+### **ReadGuid()**
+
+```csharp
+public Guid ReadGuid()
+```
+
+#### Returns
+
+[Guid](https://docs.microsoft.com/en-us/dotnet/api/system.guid)<br>
 
 ### **ReadString()**
 
@@ -193,7 +229,7 @@ public List<CustomVersion> ReadCustomVersionContainer(ECustomVersionSerializatio
 
 #### Parameters
 
-`format` [ECustomVersionSerializationFormat](./uassetapi.unversioned.ecustomversionserializationformat.md)<br>
+`format` [ECustomVersionSerializationFormat](./uassetapi.ecustomversionserializationformat.md)<br>
 
 `oldCustomVersionContainer` [List&lt;CustomVersion&gt;](https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1)<br>
 

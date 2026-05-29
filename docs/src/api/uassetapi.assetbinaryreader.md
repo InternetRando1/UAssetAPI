@@ -87,6 +87,26 @@ public FName ReadFName()
 
 [FName](./uassetapi.unrealtypes.fname.md)<br>
 
+### **ReadArray&lt;T&gt;(Int32, Func&lt;T&gt;)**
+
+```csharp
+public T[] ReadArray<T>(int length, Func<T> readElement)
+```
+
+#### Type Parameters
+
+`T`<br>
+
+#### Parameters
+
+`length` [Int32](https://docs.microsoft.com/en-us/dotnet/api/system.int32)<br>
+
+`readElement` Func&lt;T&gt;<br>
+
+#### Returns
+
+T[]<br>
+
 ### **ReadArray&lt;T&gt;(Func&lt;T&gt;)**
 
 ```csharp
@@ -104,6 +124,52 @@ public T[] ReadArray<T>(Func<T> readElement)
 #### Returns
 
 T[]<br>
+
+### **ReadMap&lt;TKey, TValue&gt;(Int32, Func&lt;TKey&gt;, Func&lt;TValue&gt;)**
+
+```csharp
+public TMap<TKey, TValue> ReadMap<TKey, TValue>(int length, Func<TKey> keyGetter, Func<TValue> valueGetter)
+```
+
+#### Type Parameters
+
+`TKey`<br>
+
+`TValue`<br>
+
+#### Parameters
+
+`length` [Int32](https://docs.microsoft.com/en-us/dotnet/api/system.int32)<br>
+
+`keyGetter` Func&lt;TKey&gt;<br>
+
+`valueGetter` Func&lt;TValue&gt;<br>
+
+#### Returns
+
+TMap&lt;TKey, TValue&gt;<br>
+
+### **ReadMap&lt;TKey, TValue&gt;(Func&lt;TKey&gt;, Func&lt;TValue&gt;)**
+
+```csharp
+public TMap<TKey, TValue> ReadMap<TKey, TValue>(Func<TKey> keyGetter, Func<TValue> valueGetter)
+```
+
+#### Type Parameters
+
+`TKey`<br>
+
+`TValue`<br>
+
+#### Parameters
+
+`keyGetter` Func&lt;TKey&gt;<br>
+
+`valueGetter` Func&lt;TValue&gt;<br>
+
+#### Returns
+
+TMap&lt;TKey, TValue&gt;<br>
 
 ### **ReadObjectThumbnail()**
 
@@ -127,6 +193,8 @@ public FLocMetadataObject ReadLocMetadataObject()
 
 ### **XFERSTRING()**
 
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
+
 ```csharp
 public string XFERSTRING()
 ```
@@ -136,6 +204,8 @@ public string XFERSTRING()
 [String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
 
 ### **XFERUNICODESTRING()**
+
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
 
 ```csharp
 public string XFERUNICODESTRING()
@@ -147,11 +217,15 @@ public string XFERUNICODESTRING()
 
 ### **XFERTEXT()**
 
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
+
 ```csharp
 public void XFERTEXT()
 ```
 
 ### **XFERNAME()**
+
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
 
 ```csharp
 public FName XFERNAME()
@@ -163,6 +237,8 @@ public FName XFERNAME()
 
 ### **XFER_FUNC_NAME()**
 
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
+
 ```csharp
 public FName XFER_FUNC_NAME()
 ```
@@ -172,6 +248,8 @@ public FName XFER_FUNC_NAME()
 [FName](./uassetapi.unrealtypes.fname.md)<br>
 
 ### **XFERPTR()**
+
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
 
 ```csharp
 public FPackageIndex XFERPTR()
@@ -183,6 +261,8 @@ public FPackageIndex XFERPTR()
 
 ### **XFER_FUNC_POINTER()**
 
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
+
 ```csharp
 public FPackageIndex XFER_FUNC_POINTER()
 ```
@@ -193,6 +273,8 @@ public FPackageIndex XFER_FUNC_POINTER()
 
 ### **XFER_PROP_POINTER()**
 
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
+
 ```csharp
 public KismetPropertyPointer XFER_PROP_POINTER()
 ```
@@ -202,6 +284,8 @@ public KismetPropertyPointer XFER_PROP_POINTER()
 [KismetPropertyPointer](./uassetapi.kismet.bytecode.kismetpropertypointer.md)<br>
 
 ### **XFER_OBJECT_POINTER()**
+
+This method is intended only to be used in parsing Kismet bytecode; please do not use it for any other purpose!
 
 ```csharp
 public FPackageIndex XFER_OBJECT_POINTER()

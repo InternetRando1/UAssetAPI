@@ -1,4 +1,4 @@
-﻿namespace UAssetAPI.UnrealTypes;
+namespace UAssetAPI.UnrealTypes;
 
 public enum EFontHinting : byte
 {
@@ -61,7 +61,7 @@ public class FFontData
     {
         var offset = writer.BaseStream.Position;
 
-        writer.Write(bIsCooked ? 1 : 0);
+        writer.WriteBooleanInt(bIsCooked);
         if (bIsCooked)
         {
             writer.Write(LocalFontFaceAsset?.Index ?? 0);

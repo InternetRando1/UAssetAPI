@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -108,14 +108,12 @@ namespace UAssetAPI.Benchmark
                     timer.Restart();
                     foreach (string assetPath in allTestingAssets2)
                     {
-                        if (Path.GetExtension(assetPath) == ".usmap")
+                        if (Path.GetExtension(assetPath) == ".usmap" || Path.GetExtension(assetPath) == ".jmap" || assetPath.EndsWith(".jmap.gz"))
                         {
                             timer.Start();
-                            mappings = new Usmap();
-                            mappings.SkipBlueprintSchemas = true;
-                            mappings.Read(mappings.PathToReader(assetPath));
+                            mappings = new Usmap(assetPath);
                             timer.Stop();
-                            Console.WriteLine("Mappings parsed in " + NumberToTwoDecimalPlaces(timer.Elapsed.TotalMilliseconds) + " ms");
+                            Console.WriteLine($"Mappings {Path.GetFileName(assetPath)} parsed in " + NumberToTwoDecimalPlaces(timer.Elapsed.TotalMilliseconds) + " ms");
                             break;
                         }
                     }

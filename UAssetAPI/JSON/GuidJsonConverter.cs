@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 
 namespace UAssetAPI.JSON
 {
-    public class GuidJsonConverter : JsonConverter
+    internal class GuidJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
         {
@@ -12,7 +12,7 @@ namespace UAssetAPI.JSON
 
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            writer.WriteValue(((Guid) value).ConvertToString());
+            writer.WriteValue(((Guid)value).ConvertToString());
         }
 
         public override bool CanRead

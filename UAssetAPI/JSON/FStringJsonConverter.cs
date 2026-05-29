@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using UAssetAPI.UnrealTypes;
 using UAssetAPI.ExportTypes;
 
 namespace UAssetAPI.JSON
 {
-    public class FStringJsonConverter : JsonConverter
+    internal class FStringJsonConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
         {

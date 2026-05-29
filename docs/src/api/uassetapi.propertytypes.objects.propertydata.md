@@ -9,7 +9,8 @@ public abstract class PropertyData : System.ICloneable
 ```
 
 Inheritance [Object](https://docs.microsoft.com/en-us/dotnet/api/system.object) → [PropertyData](./uassetapi.propertytypes.objects.propertydata.md)<br>
-Implements [ICloneable](https://docs.microsoft.com/en-us/dotnet/api/system.icloneable)
+Implements [ICloneable](https://docs.microsoft.com/en-us/dotnet/api/system.icloneable)<br>
+Attributes JsonObjectAttribute
 
 ## Fields
 
@@ -103,6 +104,12 @@ An optional tag which can be set on any property in memory. This is for the user
 
 ```csharp
 public object Tag;
+```
+
+### **_rawValue**
+
+```csharp
+protected object _rawValue;
 ```
 
 ## Properties
@@ -304,19 +311,6 @@ The context in which this property is being written.
 [Int32](https://docs.microsoft.com/en-us/dotnet/api/system.int32)<br>
 The length in bytes of the data that was written.
 
-### **InitializeZero(AssetBinaryReader)**
-
-Initialize this property when serialized as zero.
-
-```csharp
-internal void InitializeZero(AssetBinaryReader reader)
-```
-
-#### Parameters
-
-`reader` [AssetBinaryReader](./uassetapi.assetbinaryreader.md)<br>
-The BinaryReader to read from.
-
 ### **WriteEndPropertyTag(AssetBinaryWriter)**
 
 Complete writing the property tag of this property.
@@ -331,7 +325,16 @@ protected void WriteEndPropertyTag(AssetBinaryWriter writer)
 
 ### **CanBeZero(UAsset)**
 
-Does the body of this property entirely consist of null bytes? If so, the body can be skipped during serialization in unversioned properties.
+Does the body of this property entirely consist of null bytes? If so, the body can be skipped during serialization with unversioned properties.
+
+
+
+Note that this method performs a full write of the property, and is thus performance-intensive.
+ Container properties may wish to check for the following two conditions to know when to exit early:
+
+
+
+serializationContext == PropertySerializationContext.CanBeZero &amp;&amp; ((CanBeZeroStream)writer.BaseStream).HasWrittenNonZero
 
 ```csharp
 public bool CanBeZero(UAsset asset)

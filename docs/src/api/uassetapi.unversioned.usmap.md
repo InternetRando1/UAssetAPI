@@ -58,7 +58,7 @@ public uint NetCL;
 
 ### **SkipBlueprintSchemas**
 
-Whether or not to skip blueprint schemas serialized in this mappings file. Only useful for testing.
+Whether or not to skip blueprint schemas serialized in this mappings file.
 
 ```csharp
 public bool SkipBlueprintSchemas;
@@ -102,14 +102,6 @@ public List<string> FailedExtensions;
 public ConcurrentDictionary<string, byte> PathsAlreadyProcessedForSchemas;
 ```
 
-### **USMAP_MAGIC**
-
-Magic number for the .usmap format
-
-```csharp
-public static ushort USMAP_MAGIC;
-```
-
 ## Properties
 
 ### **AreFNamesCaseInsensitive**
@@ -128,7 +120,7 @@ public bool AreFNamesCaseInsensitive { get; set; }
 
 ### **Usmap(String)**
 
-Reads a .usmap file from disk and initializes a new instance of the [Usmap](./uassetapi.unversioned.usmap.md) class to store its data in memory.
+Reads a .usmap or .jmap file from disk and initializes a new instance of the [Usmap](./uassetapi.unversioned.usmap.md) class to store its data in memory.
 
 ```csharp
 public Usmap(string path)
@@ -164,7 +156,7 @@ Throw when the asset cannot be parsed correctly.
 
 ### **Usmap()**
 
-Initializes a new instance of the [Usmap](./uassetapi.unversioned.usmap.md) class. This instance will store no data and does not represent any file in particular until the [Usmap.ReadHeader(UsmapBinaryReader)](./uassetapi.unversioned.usmap.md#readheaderusmapbinaryreader) method is manually called.
+Initializes a new instance of the [Usmap](./uassetapi.unversioned.usmap.md) class. This instance will store no data and does not represent any file in particular until the [Usmap.ReadUSMAP(UsmapBinaryReader)](./uassetapi.unversioned.usmap.md#readusmapusmapbinaryreader) or [Usmap.ReadJMAP(String, Boolean)](./uassetapi.unversioned.usmap.md#readjmapstring-boolean) method is manually called.
 
 ```csharp
 public Usmap()
@@ -422,12 +414,98 @@ public UsmapBinaryReader ReadHeader(UsmapBinaryReader reader)
 
 [UsmapBinaryReader](./uassetapi.usmapbinaryreader.md)<br>
 
-### **Read(UsmapBinaryReader)**
+### **ReadUSMAP(UsmapBinaryReader)**
 
 ```csharp
-public void Read(UsmapBinaryReader compressedReader)
+public void ReadUSMAP(UsmapBinaryReader compressedReader)
 ```
 
 #### Parameters
 
 `compressedReader` [UsmapBinaryReader](./uassetapi.usmapbinaryreader.md)<br>
+
+### **ReadJMAP(Stream, Boolean, String)**
+
+Read in a .jmap file from a stream.
+
+```csharp
+public void ReadJMAP(Stream strm, bool lazyRead, string path)
+```
+
+#### Parameters
+
+`strm` [Stream](https://docs.microsoft.com/en-us/dotnet/api/system.io.stream)<br>
+Stream referencing the .jmap file.
+
+`lazyRead` [Boolean](https://docs.microsoft.com/en-us/dotnet/api/system.boolean)<br>
+Whether or not to use lazy read. If true, schemas will be read from the .json as they are needed, which worsens asset parse time but improves mappings load time.
+
+`path` [String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
+Path on disk to the original .jmap file. This can be left null if lazyRead is false.
+
+#### Exceptions
+
+T:System.Text.Json.JsonException<br>
+An error occurred while attempting to parse .jmap JSON.
+
+### **ReadJMAP(String, Boolean)**
+
+Read in a .jmap file from disk.
+
+```csharp
+public void ReadJMAP(string path, bool lazyRead)
+```
+
+#### Parameters
+
+`path` [String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
+Path to the .jmap file.
+
+`lazyRead` [Boolean](https://docs.microsoft.com/en-us/dotnet/api/system.boolean)<br>
+Whether or not to use lazy read. If true, schemas will be read from the .json as they are needed, which worsens asset parse time but improves mappings load time.
+
+#### Exceptions
+
+T:System.Text.Json.JsonException<br>
+An error occurred while attempting to parse .jmap JSON.
+
+### **PatchUsmapWithVersion(String, EngineVersion)**
+
+Patches a .usmap file in-situ to contain versioning info.
+
+```csharp
+public static void PatchUsmapWithVersion(string usmapPath, EngineVersion newVersion)
+```
+
+#### Parameters
+
+`usmapPath` [String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
+The path to the .usmap file to patch.
+
+`newVersion` [EngineVersion](./uassetapi.unrealtypes.engineversion.md)<br>
+Engine version to write.
+
+### **PatchUsmapWithVersion(String, ObjectVersion, ObjectVersionUE5, List&lt;CustomVersion&gt;, UInt32)**
+
+Patches a .usmap file in-situ to contain versioning info.
+
+```csharp
+public static void PatchUsmapWithVersion(string usmapPath, ObjectVersion ObjectVersion, ObjectVersionUE5 ObjectVersionUE5, List<CustomVersion> CustomVersionContainer, uint NetCL)
+```
+
+#### Parameters
+
+`usmapPath` [String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
+The path to the .usmap file to patch.
+
+`ObjectVersion` [ObjectVersion](./uassetapi.unrealtypes.objectversion.md)<br>
+UE4 object version to write.
+
+`ObjectVersionUE5` [ObjectVersionUE5](./uassetapi.unrealtypes.objectversionue5.md)<br>
+UE5 object version to write.
+
+`CustomVersionContainer` [List&lt;CustomVersion&gt;](https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1)<br>
+Custom version container to write.
+
+`NetCL` [UInt32](https://docs.microsoft.com/en-us/dotnet/api/system.uint32)<br>
+NetCL number to write. Defaults to 0.

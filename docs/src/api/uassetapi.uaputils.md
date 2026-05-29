@@ -6,15 +6,46 @@ Namespace: UAssetAPI
 public static class UAPUtils
 ```
 
-Inheritance [Object](https://docs.microsoft.com/en-us/dotnet/api/system.object) → [UAPUtils](./uassetapi.uaputils.md)
+Inheritance [Object](https://docs.microsoft.com/en-us/dotnet/api/system.object) → [UAPUtils](./uassetapi.uaputils.md)<br>
+Attributes [ExtensionAttribute](https://docs.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.extensionattribute)
 
-## Fields
+## Properties
+
+### **APIVersion**
+
+Current version of UAssetAPI (major.minor.patch + suffix). Suffixed with "d" in debug configurations and "x" in experimental release configurations.
+
+```csharp
+public static string APIVersion { get; }
+```
+
+#### Property Value
+
+[String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
+
+### **DisplayVersion**
+
+Display agent for UAssetAPI.
+
+```csharp
+public static string DisplayVersion { get; }
+```
+
+#### Property Value
+
+[String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
 
 ### **CurrentCommit**
 
+The Git commit associated with this build of UAssetAPI.
+
 ```csharp
-public static string CurrentCommit;
+public static string CurrentCommit { get; }
 ```
+
+#### Property Value
+
+[String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
 
 ## Methods
 
@@ -327,6 +358,20 @@ public static int DivideAndRoundUp(int a, int b)
 #### Returns
 
 [Int32](https://docs.microsoft.com/en-us/dotnet/api/system.int32)<br>
+
+### **IsNormal(PropertySerializationContext)**
+
+```csharp
+public static bool IsNormal(PropertySerializationContext context)
+```
+
+#### Parameters
+
+`context` [PropertySerializationContext](./uassetapi.propertytypes.objects.propertyserializationcontext.md)<br>
+
+#### Returns
+
+[Boolean](https://docs.microsoft.com/en-us/dotnet/api/system.boolean)<br>
 
 ### **FixDirectorySeparatorsForDisk(String)**
 

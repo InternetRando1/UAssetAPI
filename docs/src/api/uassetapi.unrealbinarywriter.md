@@ -11,6 +11,14 @@ public class UnrealBinaryWriter : System.IO.BinaryWriter, System.IDisposable, Sy
 Inheritance [Object](https://docs.microsoft.com/en-us/dotnet/api/system.object) → [BinaryWriter](https://docs.microsoft.com/en-us/dotnet/api/system.io.binarywriter) → [UnrealBinaryWriter](./uassetapi.unrealbinarywriter.md)<br>
 Implements [IDisposable](https://docs.microsoft.com/en-us/dotnet/api/system.idisposable), [IAsyncDisposable](https://docs.microsoft.com/en-us/dotnet/api/system.iasyncdisposable)
 
+## Fields
+
+### **OutStream**
+
+```csharp
+protected Stream OutStream;
+```
+
 ## Properties
 
 ### **BaseStream**
@@ -173,6 +181,26 @@ public void Write(string value)
 
 `value` [String](https://docs.microsoft.com/en-us/dotnet/api/system.string)<br>
 
+### **Write(Guid)**
+
+```csharp
+public void Write(Guid value)
+```
+
+#### Parameters
+
+`value` [Guid](https://docs.microsoft.com/en-us/dotnet/api/system.guid)<br>
+
+### **WriteBooleanInt(Boolean)**
+
+```csharp
+public void WriteBooleanInt(bool value)
+```
+
+#### Parameters
+
+`value` [Boolean](https://docs.microsoft.com/en-us/dotnet/api/system.boolean)<br>
+
 ### **Write(FString)**
 
 ```csharp
@@ -209,6 +237,6 @@ public void WriteCustomVersionContainer(ECustomVersionSerializationFormat format
 
 #### Parameters
 
-`format` [ECustomVersionSerializationFormat](./uassetapi.unversioned.ecustomversionserializationformat.md)<br>
+`format` [ECustomVersionSerializationFormat](./uassetapi.ecustomversionserializationformat.md)<br>
 
 `CustomVersionContainer` [List&lt;CustomVersion&gt;](https://docs.microsoft.com/en-us/dotnet/api/system.collections.generic.list-1)<br>

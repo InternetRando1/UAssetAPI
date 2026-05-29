@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -7,7 +7,7 @@ using UAssetAPI.ExportTypes;
 
 namespace UAssetAPI.JSON
 {
-    public class FNameJsonConverter : JsonConverter
+    internal class FNameJsonConverter : JsonConverter
     {
         public Dictionary<FName, string> ToBeFilled;
         public int currentI = 0;

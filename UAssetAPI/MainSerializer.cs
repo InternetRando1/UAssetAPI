@@ -42,7 +42,8 @@ namespace UAssetAPI
 #if DEBUGVERBOSE
         private static PropertyData lastType;
 #endif
-        public static string[] AdditionalPropertyRegistry = ["ClassProperty", "SoftClassProperty", "AssetClassProperty"];
+        internal static readonly string[] AdditionalPropertyRegistry = ["ClassProperty", "SoftClassProperty", "AssetClassProperty"];
+        internal static readonly long MaxSerializedArrayLength = 1024 * 1024;
 
         private static IDictionary<string, RegistryEntry> _propertyTypeRegistry;
 
@@ -65,9 +66,25 @@ namespace UAssetAPI
             return AppDomain.CurrentDomain.GetAssemblies().Where(a => GetNamesOfAssembliesReferencedBy(a).Contains(analyzedAssembly.FullName));
         }
 
-        public static IEnumerable<string> GetNamesOfAssembliesReferencedBy(Assembly assembly)
+        private static IEnumerable<string> GetNamesOfAssembliesReferencedBy(Assembly assembly)
         {
             return assembly.GetReferencedAssemblies().Select(assemblyName => assemblyName.FullName);
+        }
+
+        internal static void InitializeCurrentCommit()
+        {
+            UAPUtils._commitAssigned = true;
+            UAPUtils._currentCommit = string.Empty;
+            using (Stream stream = registryParentDataType.Assembly.GetManifestResourceStream("UAssetAPI.git_commit.txt"))
+            {
+                if (stream != null)
+                {
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        if (reader != null) UAPUtils._currentCommit = reader.ReadToEnd().Trim();
+                    }
+                }
+            }
         }
 
         private static Type registryParentDataType = typeof(PropertyData);
@@ -114,20 +131,12 @@ namespace UAssetAPI
                            nameParam
                         ).Compile();
 
+                        // prevent duplicate entries
+                        if (_propertyTypeRegistry.ContainsKey(returnedPropType.Value))
+                        {
+                            throw new InvalidOperationException($"Different child classes of PropertyData with the same PropertyType field exist: {res.PropertyType.FullName} and {_propertyTypeRegistry[returnedPropType.Value].PropertyType.FullName}");
+                        }
                         _propertyTypeRegistry[returnedPropType.Value] = res;
-                    }
-                }
-            }
-
-            // Fetch the current git commit while we're here
-            UAPUtils.CurrentCommit = string.Empty;
-            using (Stream stream = registryParentDataType.Assembly.GetManifestResourceStream("UAssetAPI.git_commit.txt"))
-            {
-                if (stream != null)
-                {
-                    using (StreamReader reader = new StreamReader(stream))
-                    {
-                        if (reader != null) UAPUtils.CurrentCommit = reader.ReadToEnd().Trim();
                     }
                 }
             }
@@ -183,7 +192,7 @@ namespace UAssetAPI
                     {
                         if (zeroProps.Contains(lastNum))
                         {
-                            int valueNum = lastNum - firstNum + 1;
+                            int valueNum = lastNum - firstNum;
                             fragmentHasAnyZeros.Add(valueNum / FFragment.ValueMax);
                         }
                         sortedProps.Add(propMap[lastNum]);
@@ -360,6 +369,7 @@ namespace UAssetAPI
                     {
                         reader.BaseStream.Position = posBefore;
                         data = new RawStructPropertyData(name);
+                        data.PropertyTagFlags = propertyTagFlags;
                         data.Ancestry.Initialize(ancestry, parentName, parentModulePath);
                         data.ArrayIndex = ArrayIndex;
                         data.PropertyTypeName = propertyTypeName;
@@ -410,6 +420,10 @@ namespace UAssetAPI
                 }
 
                 UsmapSchema relevantSchema = reader.Asset.Mappings.GetSchemaFromName(parentName?.ToString(), reader.Asset, parentModulePath?.ToString());
+#if DEBUG || DEBUGVERBOSE || DEBUGTRACING
+                UsmapSchema originalSchemaForAnalysis = reader.Asset.Mappings.GetSchemaFromName(parentName?.ToString(), reader.Asset, parentModulePath?.ToString());
+#endif
+
                 while (header.UnversionedPropertyIndex > header.CurrentFragment.Value.LastNum)
                 {
                     if (header.CurrentFragment.Value.bIsLast) return null;
@@ -610,6 +624,7 @@ namespace UAssetAPI
                 writer.Write((int)0); // initial length
                 writer.Write((byte)property.PropertyTagFlags);
                 if (property.ArrayIndex != 0) writer.Write(property.ArrayIndex);
+                if (property.PropertyGuid != null) writer.Write(property.PropertyGuid.Value);
                 int realLength = property.Write(writer, includeHeader);
                 int newLoc = (int)writer.BaseStream.Position;
 

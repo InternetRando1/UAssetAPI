@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UAssetAPI.PropertyTypes.Objects;
 using UAssetAPI.UnrealTypes;
 using UAssetAPI.CustomVersions;
@@ -47,7 +47,7 @@ public class SmartNamePropertyData : PropertyData
         }
         if (reader.Asset.GetCustomVersion<FAnimPhysObjectVersion>() < FAnimPhysObjectVersion.SmartNameRefactorForDeterministicCooking && !reader.Asset.IsFilterEditorOnly)
         {
-            TempGUID = new Guid(reader.ReadBytes(16));
+            TempGUID = reader.ReadGuid();
         }
     }
 
@@ -67,7 +67,7 @@ public class SmartNamePropertyData : PropertyData
         }
         if (writer.Asset.GetCustomVersion<FAnimPhysObjectVersion>() < FAnimPhysObjectVersion.SmartNameRefactorForDeterministicCooking && !writer.Asset.IsFilterEditorOnly)
         {
-            writer.Write(TempGUID.ToByteArray());
+            writer.Write(TempGUID);
         }
 
         return (int)(writer.BaseStream.Position - here);
